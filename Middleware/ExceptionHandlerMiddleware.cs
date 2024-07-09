@@ -12,7 +12,7 @@ namespace ST_Testwork.Middleware
         private readonly ILogger logger;
         private readonly RequestDelegate next;
 
-        public ExceptionHandlerMiddleware(RequestDelegate next, ILogger logger)
+        public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger)
         {
             this.next = next;
             this.logger = logger;
