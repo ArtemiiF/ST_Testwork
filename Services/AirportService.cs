@@ -1,4 +1,5 @@
-﻿using ST_Testwork.Interfaces;
+﻿using Microsoft.Extensions.Configuration;
+using ST_Testwork.Interfaces;
 using ST_Testwork.Models;
 using System;
 using System.Threading.Tasks;
@@ -8,21 +9,32 @@ namespace ST_Testwork.Services
     public class AirportService : IAirportService
     {
         private readonly IHttpClientService httpClientService;
-        public AirportService(IHttpClientService httpClientService)
+        private readonly IConfiguration configuration;
+
+        public AirportService(IHttpClientService httpClientService,
+            IConfiguration configuration)
         {
             this.httpClientService = httpClientService;
+            this.configuration = configuration;
         }
 
         public async Task<double> GetDistanceBetweenTwoAirportsInMilesAsync(string firstAirportIATACode, string secondAirportIATACode)
         {
-            var firstAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"https://places-dev.cteleport.com/airports/{firstAirportIATACode}");
+            var url = configuration.GetValue("AirportSearcherUrl", string.Empty);
+
+            if(url == string.Empty)
+            {
+                throw new Exception("Url for airport search doesnt set");
+            }
+
+            var firstAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"{url}{firstAirportIATACode}");
 
             if(!firstAirportResponse.IsSuccessStatusCode)
             {
                 throw new Exception($"Airport with IATA {firstAirportIATACode} not found");
             }
 
-            var secondAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"https://places-dev.cteleport.com/airports/{secondAirportIATACode}");
+            var secondAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"{url}{secondAirportIATACode}");
 
             if (!firstAirportResponse.IsSuccessStatusCode)
             {
