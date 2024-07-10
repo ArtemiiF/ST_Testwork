@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ST_Testwork.Interfaces;
@@ -25,6 +26,7 @@ namespace ST_Testwork
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddMemoryCache();
             services.AddScoped<IValidator<AirportsIATACodes>, AirportIATACodeValidator>();
             services.AddScoped<IAirportService, AirportService>();
             services.AddHttpClient<IHttpClientService, HttpClientService>();

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using ST_Testwork.Interfaces;
 using ST_Testwork.Models;
 using System;
@@ -10,38 +11,65 @@ namespace ST_Testwork.Services
     {
         private readonly IHttpClientService httpClientService;
         private readonly IConfiguration configuration;
+        private IMemoryCache cache;
 
         public AirportService(IHttpClientService httpClientService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMemoryCache memoryCache)
         {
             this.httpClientService = httpClientService;
             this.configuration = configuration;
+            this.cache = memoryCache;
         }
 
         public async Task<double> GetDistanceBetweenTwoAirportsInMilesAsync(string firstAirportIATACode, string secondAirportIATACode)
         {
             var url = configuration.GetValue("AirportSearcherUrl", string.Empty);
 
-            if(url == string.Empty)
+            AirportCoordinates firstAirportCoordinates;
+
+            AirportCoordinates secondAirportCoordinates;
+
+            if (url == string.Empty)
             {
                 throw new Exception("Url for airport search doesnt set");
             }
 
-            var firstAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"{url}{firstAirportIATACode}");
-
-            if(!firstAirportResponse.IsSuccessStatusCode)
+            if (cache.TryGetValue(firstAirportIATACode, out AirportCoordinates first))
             {
-                throw new Exception($"Airport with IATA {firstAirportIATACode} not found");
+                firstAirportCoordinates = first;
+            }
+            else
+            {
+                var firstAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"{url}{firstAirportIATACode}");
+                firstAirportCoordinates = firstAirportResponse.Value.Coordinates;
+
+                if (!firstAirportResponse.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Airport with IATA {firstAirportIATACode} not found");
+                }
+                cache.Set(firstAirportIATACode, firstAirportResponse.Value.Coordinates);
             }
 
-            var secondAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"{url}{secondAirportIATACode}");
 
-            if (!firstAirportResponse.IsSuccessStatusCode)
+            if (cache.TryGetValue(secondAirportIATACode, out AirportCoordinates second))
             {
-                throw new Exception($"Airport with IATA {secondAirportIATACode} not found");
+                secondAirportCoordinates = second;
+            }
+            else
+            {
+                var secondAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"{url}{secondAirportIATACode}");
+                secondAirportCoordinates = secondAirportResponse.Value.Coordinates;
+
+                if (!secondAirportResponse.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Airport with IATA {secondAirportIATACode} not found");
+                }
+                cache.Set(secondAirportIATACode, secondAirportResponse.Value.Coordinates);
             }
 
-            return CalculateDistanceBetweenTwoAirportsInMiles(firstAirportResponse.Value.Coordinates, secondAirportResponse.Value.Coordinates);
+
+            return CalculateDistanceBetweenTwoAirportsInMiles(firstAirportCoordinates, secondAirportCoordinates);
         }
 
         #region Private methods
@@ -64,7 +92,6 @@ namespace ST_Testwork.Services
 
             return distInMiles;
         }
-
 
         #endregion
     }
