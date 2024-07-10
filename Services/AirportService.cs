@@ -11,7 +11,7 @@ namespace ST_Testwork.Services
     {
         private readonly IHttpClientService httpClientService;
         private readonly IConfiguration configuration;
-        private IMemoryCache cache;
+        private readonly IMemoryCache cache;
 
         public AirportService(IHttpClientService httpClientService,
             IConfiguration configuration,
