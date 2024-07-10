@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using ST_Testwork.Interfaces;
+using ST_Testwork.Models;
 
 namespace ST_Testwork.Controllers
 {
@@ -12,15 +12,26 @@ namespace ST_Testwork.Controllers
     public class AirportDistanceController : ControllerBase
     {
         private readonly IAirportService airportService;
-        public AirportDistanceController(IAirportService airportService)
+        private readonly IValidator<AirportsIATACodes> airportsIATACodesValidator;
+
+        public AirportDistanceController(
+            IAirportService airportService,
+            IValidator<AirportsIATACodes> airportsIATACodesValidator
+            )
         {
+            this.airportsIATACodesValidator = airportsIATACodesValidator;
             this.airportService = airportService;
         }
 
         [HttpGet("get-distance")]
-        public async Task<IActionResult> Get([FromQuery] string firstAirport, [FromQuery] string secondAirport)
+        public async Task<IActionResult> Get([FromQuery] AirportsIATACodes airportsIATACodes)
         {
-            return Ok(await airportService.GetDistanceBetweenTwoAirportsInMilesAsync(firstAirport, secondAirport));
+            var validationrResult = await airportsIATACodesValidator.ValidateAsync(airportsIATACodes);
+            if (!validationrResult.IsValid)
+            { 
+                return BadRequest(validationrResult.Errors);
+            }
+            return Ok(await airportService.GetDistanceBetweenTwoAirportsInMilesAsync(airportsIATACodes.FirstAirportCode, airportsIATACodes.SecondAirportCode));
         }
     }
 }

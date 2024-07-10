@@ -13,11 +13,21 @@ namespace ST_Testwork.Services
             this.httpClientService = httpClientService;
         }
 
-        public async Task<double> GetDistanceBetweenTwoAirportsInMilesAsync(string firstAirport, string secondAirport)
+        public async Task<double> GetDistanceBetweenTwoAirportsInMilesAsync(string firstAirportIATACode, string secondAirportIATACode)
         {
-            var firstAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"https://places-dev.cteleport.com/airports/{firstAirport}");
+            var firstAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"https://places-dev.cteleport.com/airports/{firstAirportIATACode}");
 
-            var secondAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"https://places-dev.cteleport.com/airports/{secondAirport}");
+            if(!firstAirportResponse.IsSuccessStatusCode)
+            {
+                throw new Exception($"Airport with IATA {firstAirportIATACode} not found");
+            }
+
+            var secondAirportResponse = await httpClientService.GetAsync<AirportHttpResponse>($"https://places-dev.cteleport.com/airports/{secondAirportIATACode}");
+
+            if (!firstAirportResponse.IsSuccessStatusCode)
+            {
+                throw new Exception($"Airport with IATA {secondAirportIATACode} not found");
+            }
 
             return CalculateDistanceBetweenTwoAirportsInMiles(firstAirportResponse.Value.Coordinates, secondAirportResponse.Value.Coordinates);
         }

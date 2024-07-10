@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ST_Testwork.Interfaces;
 using ST_Testwork.Middleware;
+using ST_Testwork.Models;
 using ST_Testwork.Services;
+using ST_Testwork.Validators;
 
 namespace ST_Testwork
 {
@@ -22,6 +25,7 @@ namespace ST_Testwork
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddScoped<IValidator<AirportsIATACodes>, AirportIATACodeValidator>();
             services.AddScoped<IAirportService, AirportService>();
             services.AddHttpClient<IHttpClientService, HttpClientService>();
             services.AddSwaggerGen(c =>
